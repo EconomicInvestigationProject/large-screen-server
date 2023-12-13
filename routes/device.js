@@ -38,8 +38,8 @@ router.get("/list", async (ctx) => {
     const percentageStatus3 = (countStatus3 / totalCount) * 100;
 
     const statusPercentages = [
-      { value: percentageStatus2, name: "离线" },
       { value: percentageStatus1, name: "正常" },
+      { value: percentageStatus2, name: "离线" },
       { value: percentageStatus3, name: "损坏" }
     ];
 
