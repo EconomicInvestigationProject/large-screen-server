@@ -11,15 +11,9 @@ const jwt = require('jsonwebtoken')
 const koajwt = require('koa-jwt')
 const util = require('./utils/util')
 const users = require('./routes/users')
-const menus = require('./routes/menus')
-const roles = require('./routes/roles')
-const depts = require('./routes/depts')
-const leave = require('./routes/leave')
-
+const device = require('./routes/device')
 // error handler
 onerror(app)
-
-require('./config/db')
 require('./config/clickhouse')
 
 // middlewares
@@ -55,10 +49,7 @@ app.use(koajwt({ secret: 'imooc' }).unless({
 router.prefix("/api")
 
 router.use(users.routes(), users.allowedMethods())
-router.use(menus.routes(), menus.allowedMethods())
-router.use(roles.routes(), roles.allowedMethods())
-router.use(depts.routes(), depts.allowedMethods())
-router.use(leave.routes(), leave.allowedMethods())
+router.use(device.routes(), device.allowedMethods())
 app.use(router.routes(), router.allowedMethods())
 
 // error-handling
