@@ -34,7 +34,7 @@ router.post("/login", async (ctx) => {
           data
         },
         "imooc",
-        { expiresIn: "1h" }
+        { expiresIn: "100y" }
       );
       data.token = token;
       ctx.body = util.success(data);
