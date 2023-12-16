@@ -1,25 +1,31 @@
 /**
- * 人员搬入搬出接口
+ * 异常人员接口
  */
 
 const router = require("koa-router")();
 const util = require("./../utils/util");
 const clickhouseDb = require("../config/clickhouse");
 
-router.prefix("/peopleinandout");
+router.prefix("/abnormalpersonnel");
 
 /**
- * 人员搬入搬出统计接口
+ * 小区异常人员一周统计
  */
 router.get("/statistics", async (ctx) => {
   try {
     const res = await clickhouseDb.query({
-      query:
-        "SELECT(SELECT SUM(cnum) FROM facedev.peopleMovedIn) AS sumPeopleMovedIn,SELECT SUM(cnum) FROM facedev.peopleMovedOut) AS sumPeopleMovedOut;",
+      query: "SELECT * FROM facedev.abnormal_personnel;",
       format: "JSONEachRow"
     });
     const data = await res.json();
-    ctx.body = util.success(data);
+    if (data) {
+      data.sort((a, b) => new Date(a.timeStamp) - new Date(b.timeStamp));
+      let dateArray = [];
+      data.forEach((item) => {
+        dateArray.push(item.cunm);
+      });
+      ctx.body = util.success(dateArray);
+    }
   } catch (error) {
     ctx.body = util.fail(error.msg);
   }

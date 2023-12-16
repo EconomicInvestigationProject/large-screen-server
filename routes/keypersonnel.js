@@ -1,21 +1,20 @@
 /**
- * 人员搬入搬出接口
+ * 小区重点人员接口
  */
 
 const router = require("koa-router")();
 const util = require("./../utils/util");
 const clickhouseDb = require("../config/clickhouse");
 
-router.prefix("/peopleinandout");
+router.prefix("/keypersonnel");
 
 /**
- * 人员搬入搬出统计接口
+ * 小区重点人员统计
  */
 router.get("/statistics", async (ctx) => {
   try {
     const res = await clickhouseDb.query({
-      query:
-        "SELECT(SELECT SUM(cnum) FROM facedev.peopleMovedIn) AS sumPeopleMovedIn,SELECT SUM(cnum) FROM facedev.peopleMovedOut) AS sumPeopleMovedOut;",
+      query: "SELECT * FROM facedev.key_personnel;",
       format: "JSONEachRow"
     });
     const data = await res.json();
