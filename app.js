@@ -15,6 +15,9 @@ const device = require("./routes/device");
 const abnormalpersonnel = require("./routes/abnormalpersonnel");
 const keypersonnel = require("./routes/keypersonnel");
 const elevatorpersonneldensity = require("./routes/elevatorpersonneldensity");
+const peopleinandout = require("./routes/peopleinandout");
+const proportionvarioustypespeople = require("./routes/proportionvarioustypespeople");
+
 // error handler
 onerror(app);
 require("./config/clickhouse");
@@ -64,6 +67,11 @@ router.use(keypersonnel.routes(), keypersonnel.allowedMethods());
 router.use(
   elevatorpersonneldensity.routes(),
   elevatorpersonneldensity.allowedMethods()
+);
+router.use(peopleinandout.routes(), peopleinandout.allowedMethods());
+router.use(
+  proportionvarioustypespeople.routes(),
+  proportionvarioustypespeople.allowedMethods()
 );
 
 app.use(router.routes(), router.allowedMethods());
