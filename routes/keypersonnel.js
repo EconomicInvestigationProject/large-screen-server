@@ -24,4 +24,25 @@ router.get("/statistics", async (ctx) => {
   }
 });
 
+/**
+ * 小区删除重点人员
+ */
+router.post("/deleteRecord", async (ctx) => {
+  const { idCard } = ctx.request.body;
+  try {
+    // 使用 DELETE 查询删除记录
+    let params = {
+      query: `ALTER TABLE facedev.key_personnel DELETE WHERE idCard = '${idCard}'`,
+      params: {
+        idCard: idCard
+      }
+    };
+    await clickhouseDb.exec(params);
+    ctx.body = util.success("删除成功");
+  } catch (error) {
+    // 提供错误的摘要信息
+    ctx.body = util.fail("Failed to delete record: " + error.message);
+  }
+});
+
 module.exports = router;
