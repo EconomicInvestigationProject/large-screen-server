@@ -40,24 +40,24 @@ app.use(
 );
 
 // logger
-// app.use(async (ctx, next) => {
-//   log4js.info(`get params:${JSON.stringify(ctx.request.query)}`);
-//   log4js.info(`post params:${JSON.stringify(ctx.request.body)}`);
-//   await next().catch((err) => {
-//     if (err.status == "401") {
-//       ctx.status = 200;
-//       ctx.body = util.fail("Token认证失败", util.CODE.AUTH_ERROR);
-//     } else {
-//       throw err;
-//     }
-//   });
-// });
+app.use(async (ctx, next) => {
+  log4js.info(`get params:${JSON.stringify(ctx.request.query)}`);
+  log4js.info(`post params:${JSON.stringify(ctx.request.body)}`);
+  await next().catch((err) => {
+    if (err.status == "401") {
+      ctx.status = 200;
+      ctx.body = util.fail("Token认证失败", util.CODE.AUTH_ERROR);
+    } else {
+      throw err;
+    }
+  });
+});
 
-// app.use(
-//   koajwt({ secret: "imooc" }).unless({
-//     path: [/^\/api\/users\/login/]
-//   })
-// );
+app.use(
+  koajwt({ secret: "imooc" }).unless({
+    path: [/^\/api\/users\/login/]
+  })
+);
 
 router.prefix("/api");
 
