@@ -25,6 +25,72 @@ router.get("/statistics", async (ctx) => {
 });
 
 /**
+ * 按条件查询重点人员
+ */
+router.get("/page", async (ctx) => {
+  try {
+    const { pageNumber, pageSize, startDate, endDate, userKeyType } = ctx.query;
+
+    // 构建用于获取数据的基本 SQL 查询
+    let queryData = "SELECT * FROM facedev.kePersonnel WHERE 1=1";
+
+    // 添加基于日期的过滤条件
+    if (startDate && endDate) {
+      queryData += ` AND timeStamp BETWEEN '${startDate}' AND '${endDate}'`;
+    }
+
+    // 添加基于类型的过滤条件
+    if (userKeyType) {
+      queryData += ` AND userKeyType = '${userKeyType}'`;
+    }
+
+    // 计算数据检索的偏移量
+    const offset = (pageNumber - 1) * pageSize;
+    queryData += ` ORDER BY timeStamp DESC LIMIT ${pageSize} OFFSET ${offset}`;
+
+    // 执行获取数据的查询
+    const resData = await clickhouseDb.query({
+      query: queryData,
+      format: "JSONEachRow"
+    });
+
+    const data = await resData.json();
+
+    // 构建用于获取总记录数的基本 SQL 查询
+    let queryCount = "SELECT COUNT() FROM facedev.kePersonnel WHERE 1=1";
+
+    // 添加基于日期的过滤条件
+    if (startDate && endDate) {
+      queryCount += ` AND timeStamp BETWEEN '${startDate}' AND '${endDate}'`;
+    }
+
+    // 添加基于类型的过滤条件
+    if (userKeyType) {
+      queryCount += ` AND userKeyType = '${userKeyType}'`;
+    }
+
+    // 执行获取总记录数的查询
+    const resCount = await clickhouseDb.query({
+      query: queryCount,
+      format: "JSON"
+    });
+
+    // 解析总记录数
+    const totalCount = JSON.parse(await resCount.text()).data[0]["count()"];
+    const totalPage = String(Math.ceil(totalCount / pageSize));
+
+    ctx.body = util.success({
+      data,
+      totalPage,
+      total: totalCount,
+      currentPage: pageNumber
+    });
+  } catch (error) {
+    ctx.body = util.fail(error.msg);
+  }
+});
+
+/**
  * 小区新增重点人员
  */
 router.post("/addRecord", async (ctx) => {
