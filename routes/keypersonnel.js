@@ -29,10 +29,12 @@ router.get("/statistics", async (ctx) => {
  */
 router.get("/page", async (ctx) => {
   try {
-    const { pageNumber, pageSize, startDate, endDate, userKeyType } = ctx.query;
+    const { currentPage, pageSize, startDate, endDate, userKeyType } =
+      ctx.query;
 
     // 构建用于获取数据的基本 SQL 查询
-    let queryData = "SELECT * FROM facedev.kePersonnel WHERE 1=1";
+    let queryData =
+      "SELECT DISTINCT ON (idCard) * FROM facedev.kePersonnel WHERE 1=1";
 
     // 添加基于日期的过滤条件
     if (startDate && endDate) {
@@ -45,7 +47,7 @@ router.get("/page", async (ctx) => {
     }
 
     // 计算数据检索的偏移量
-    const offset = (pageNumber - 1) * pageSize;
+    const offset = (currentPage - 1) * pageSize;
     queryData += ` ORDER BY timeStamp DESC LIMIT ${pageSize} OFFSET ${offset}`;
 
     // 执行获取数据的查询
@@ -57,7 +59,8 @@ router.get("/page", async (ctx) => {
     const data = await resData.json();
 
     // 构建用于获取总记录数的基本 SQL 查询
-    let queryCount = "SELECT COUNT() FROM facedev.kePersonnel WHERE 1=1";
+    let queryCount =
+      "SELECT COUNT(DISTINCT idCard) FROM facedev.kePersonnel WHERE 1=1";
 
     // 添加基于日期的过滤条件
     if (startDate && endDate) {
@@ -69,21 +72,23 @@ router.get("/page", async (ctx) => {
       queryCount += ` AND userKeyType = '${userKeyType}'`;
     }
 
-    // 执行获取总记录数的查询
+  // 执行获取总记录数的查询
     const resCount = await clickhouseDb.query({
       query: queryCount,
       format: "JSON"
     });
 
     // 解析总记录数
-    const totalCount = JSON.parse(await resCount.text()).data[0]["count()"];
-    const totalPage = String(Math.ceil(totalCount / pageSize));
+    const responseJson = JSON.parse(await resCount.text());
+    const countValue = responseJson.data[0]["uniqExact(idCard)"];
+    const totalCount = parseInt(countValue, 10);
+    const pageCount = Math.ceil(totalCount / parseInt(pageSize, 10));
 
     ctx.body = util.success({
       data,
-      totalPage,
+      pageCount: isNaN(pageCount) ? "0" : parseInt(pageCount),
       total: totalCount,
-      currentPage: pageNumber
+      currentPage: parseInt(currentPage, 10)
     });
   } catch (error) {
     ctx.body = util.fail(error.msg);
@@ -94,7 +99,7 @@ router.get("/page", async (ctx) => {
  * 小区新增重点人员
  */
 router.post("/addRecord", async (ctx) => {
-  const { idCard, name, status } = ctx.request.body;
+  const { idCard, name, userKeyType } = ctx.request.body;
   let condition = ""; //状态
   // 获取今天的日期
   let today = new Date();
@@ -102,13 +107,8 @@ router.post("/addRecord", async (ctx) => {
   let timeStamp = today.toISOString().split("T")[0];
 
   try {
-    if (status) {
-      condition = "in";
-    } else {
-      condition = "out";
-    }
     // 构造 JSON 字符串
-    let jsonString = `{"name": "${name}", "idCard": "${idCard}", "status": "${condition}", "timeStamp": "${timeStamp}"}`;
+    let jsonString = `{"name": "${name}", "idCard": "${idCard}", "userKeyType": "${userKeyType}", "timeStamp": "${timeStamp}"}`;
 
     // 构造 SQL 查询字符串
     let queryString = `INSERT INTO facedev.key_personnel FORMAT JSONEachRow ${jsonString}`;
