@@ -72,7 +72,7 @@ router.get("/page", async (ctx) => {
       queryCount += ` AND userKeyType = '${userKeyType}'`;
     }
 
-  // 执行获取总记录数的查询
+    // 执行获取总记录数的查询
     const resCount = await clickhouseDb.query({
       query: queryCount,
       format: "JSON"
@@ -81,6 +81,74 @@ router.get("/page", async (ctx) => {
     // 解析总记录数
     const responseJson = JSON.parse(await resCount.text());
     const countValue = responseJson.data[0]["uniqExact(idCard)"];
+    const totalCount = parseInt(countValue, 10);
+    const pageCount = Math.ceil(totalCount / parseInt(pageSize, 10));
+
+    ctx.body = util.success({
+      data,
+      pageCount: isNaN(pageCount) ? "0" : parseInt(pageCount),
+      total: totalCount,
+      currentPage: parseInt(currentPage, 10)
+    });
+  } catch (error) {
+    ctx.body = util.fail(error.msg);
+  }
+});
+
+/**
+ * 按条件查询重点人员个人分页
+ */
+router.get("/personalPage", async (ctx) => {
+  try {
+    const { currentPage, pageSize, startDate, endDate, idCard } = ctx.query;
+
+    // 构建用于获取数据的基本 SQL 查询
+    let queryData = "SELECT * FROM facedev.kePersonnel WHERE 1=1";
+
+    // 添加基于日期的过滤条件
+    if (startDate && endDate) {
+      queryData += ` AND timeStamp BETWEEN '${startDate}' AND '${endDate}'`;
+    }
+
+    // 添加基于类型的过滤条件
+    if (idCard) {
+      queryData += ` AND idCard = '${idCard}'`;
+    }
+
+    // 计算数据检索的偏移量
+    const offset = (currentPage - 1) * pageSize;
+    queryData += ` ORDER BY timeStamp DESC LIMIT ${pageSize} OFFSET ${offset}`;
+
+    // 执行获取数据的查询
+    const resData = await clickhouseDb.query({
+      query: queryData,
+      format: "JSONEachRow"
+    });
+
+    const data = await resData.json();
+
+    // 构建用于获取总记录数的基本 SQL 查询
+    let queryCount = "SELECT COUNT() FROM facedev.kePersonnel WHERE 1=1";
+
+    // 添加基于日期的过滤条件
+    if (startDate && endDate) {
+      queryCount += ` AND timeStamp BETWEEN '${startDate}' AND '${endDate}'`;
+    }
+
+    // 添加基于类型的过滤条件
+    if (idCard) {
+      queryCount += ` AND idCard = '${idCard}'`;
+    }
+
+    // 执行获取总记录数的查询
+    const resCount = await clickhouseDb.query({
+      query: queryCount,
+      format: "JSON"
+    });
+
+    // 解析总记录数
+    const responseJson = JSON.parse(await resCount.text());
+    const countValue = responseJson.data[0]["count()"];
     const totalCount = parseInt(countValue, 10);
     const pageCount = Math.ceil(totalCount / parseInt(pageSize, 10));
 
