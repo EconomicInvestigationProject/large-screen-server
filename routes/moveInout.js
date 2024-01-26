@@ -157,16 +157,14 @@ router.get("/personalPage", async (ctx) => {
     const { currentPage, pageSize, startDate, endDate, idCard } = ctx.query;
 
     // 构建用于获取数据的基本 SQL 查询
-    let queryData = "SELECT * FROM facedev.kePersonnel WHERE 1=1";
+    let queryData =
+      "SELECT * FROM ( SELECT  * FROM facedev.peopleMovedInDeail WHERE 1=1 UNION ALL SELECT DISTINCT ON (idCard) * FROM facedev.peopleMovedOutDeail WHERE 1=1) AS combined_result";
 
     // 添加基于日期的过滤条件
     if (startDate && endDate) {
-      queryData += ` AND timeStamp BETWEEN '${startDate}' AND '${endDate}'`;
-    }
-
-    // 添加基于类型的过滤条件
-    if (idCard) {
-      queryData += ` AND idCard = '${idCard}'`;
+      queryData += ` WHERE timeStamp BETWEEN '${startDate}' AND '${endDate}' AND idCard = '${idCard}'`;
+    } else {
+      queryData += ` WHERE idCard = '${idCard}'`;
     }
 
     // 计算数据检索的偏移量
@@ -182,16 +180,14 @@ router.get("/personalPage", async (ctx) => {
     const data = await resData.json();
 
     // 构建用于获取总记录数的基本 SQL 查询
-    let queryCount = "SELECT COUNT() FROM facedev.kePersonnel WHERE 1=1";
+    let queryCount =
+      "SELECT COUNT() FROM ( SELECT  * FROM facedev.peopleMovedInDeail WHERE 1=1 UNION ALL SELECT DISTINCT ON (idCard) * FROM facedev.peopleMovedOutDeail WHERE 1=1) AS combined_result";
 
     // 添加基于日期的过滤条件
     if (startDate && endDate) {
-      queryCount += ` AND timeStamp BETWEEN '${startDate}' AND '${endDate}'`;
-    }
-
-    // 添加基于类型的过滤条件
-    if (idCard) {
-      queryCount += ` AND idCard = '${idCard}'`;
+      queryCount += ` WHERE timeStamp BETWEEN '${startDate}' AND '${endDate}' AND idCard = '${idCard}'`;
+    } else {
+      queryCount += ` WHERE idCard = '${idCard}'`;
     }
 
     // 执行获取总记录数的查询

@@ -13,12 +13,40 @@ router.prefix("/keypersonnel");
  */
 router.get("/statistics", async (ctx) => {
   try {
+    const query = `
+      SELECT 
+        userKeyType,
+        COUNT() AS userCount
+      FROM facedev.key_personnel
+      GROUP BY userKeyType;
+    `;
+
     const res = await clickhouseDb.query({
-      query: "SELECT * FROM facedev.key_personnel;",
+      query,
       format: "JSONEachRow"
     });
+
     const data = await res.json();
-    ctx.body = util.success(data);
+
+    // 映射关系
+    const typeMapping = {
+      "1": "涉恐人员",
+      "2": "涉稳人员",
+      "3": "重大刑事犯罪前科人员",
+      "4": "涉毒人员",
+      "5": "在逃人员",
+      "6": "肇事肇祸精神病人",
+      "7": "重点上访人员",
+      "8": "标记人员",
+    };
+
+    // 将数据转换为前端需要的结构
+    const resultArray = data.map(item => ({
+      label: typeMapping[item.userKeyType] || "其他",
+      value: item.userCount.toString()
+    }));
+
+    ctx.body = util.success(resultArray);
   } catch (error) {
     ctx.body = util.fail(error.msg);
   }
