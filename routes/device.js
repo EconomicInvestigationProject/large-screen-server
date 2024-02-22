@@ -33,9 +33,9 @@ router.get("/list", async (ctx) => {
     const totalCount = countStatus1 + countStatus2 + countStatus3;
 
     // Calculate percentages
-    const percentageStatus1 = (countStatus1 / totalCount) * 100;
-    const percentageStatus2 = (countStatus2 / totalCount) * 100;
-    const percentageStatus3 = (countStatus3 / totalCount) * 100;
+    const percentageStatus1 =  Math.round((countStatus1 / totalCount) * 100);
+    const percentageStatus2 =  Math.round((countStatus2 / totalCount) * 100);
+    const percentageStatus3 =  Math.round((countStatus3 / totalCount) * 100);
 
     const statusPercentages = [
       { value: percentageStatus1, name: "正常" },
